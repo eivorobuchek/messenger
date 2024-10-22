@@ -17,6 +17,6 @@
                             |   Chat       |
                             |   Service    |
                             +--------------+
-                        |
-                        v
-                        Cassandra
+                            |
+                            v
+                            Cassandra
