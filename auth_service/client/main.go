@@ -1,4 +1,4 @@
-package client
+package main
 
 import (
 	pb "auth_service/pkg/api/auth"
