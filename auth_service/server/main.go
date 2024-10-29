@@ -13,15 +13,24 @@ import (
 	"sync"
 )
 
+type Email string
+
+func (e Email) Valid() bool { /*...*/ return true }
+
+type User struct {
+	EmailAddress Email
+	Password     string // а лучше hashed password
+}
+
 type Server struct {
 	pb.UnimplementedAuthServiceServer
 
 	mx            sync.RWMutex
-	registerUsers map[string]*string
+	registerUsers map[Email]*User
 }
 
 func NewServer() *Server {
-	return &Server{registerUsers: make(map[string]*string)}
+	return &Server{registerUsers: make(map[Email]*User)}
 }
 
 func main() {
@@ -48,7 +57,7 @@ func (s *Server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 
 	email := req.GetEmail()
 	password := req.GetPassword()
-	if _, ok := s.registerUsers[email]; ok {
+	if _, ok := s.registerUsers[Email(email)]; ok {
 
 		errInfo := errdetails.BadRequest_FieldViolation{
 			Field:       "email",
@@ -59,7 +68,10 @@ func (s *Server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 	}
 
 	s.mx.Lock()
-	s.registerUsers[email] = &password
+	s.registerUsers[Email(email)] = &User{
+		EmailAddress: Email(email),
+		Password:     password,
+	}
 	s.mx.Unlock()
 
 	return &pb.RegisterResponse{Message: "User registered successfully"}, nil
@@ -106,17 +118,17 @@ func (s *Server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 
 	email := req.GetEmail()
 	password := req.GetPassword()
-	userPassword, ok := s.registerUsers[email]
+	user, ok := s.registerUsers[Email(email)]
 	if !ok {
 		errInfo := errdetails.BadRequest_FieldViolation{
 			Field:       "email",
 			Description: fmt.Sprintf("%s not found", email),
 		}
-		
+
 		return nil, status.Error(codes.Unauthenticated, errInfo.String())
 	}
 
-	if *userPassword != password {
+	if (*user).Password != password {
 		errInfo := errdetails.BadRequest_FieldViolation{
 			Field:       "password",
 			Description: fmt.Sprintf("%s incorrect password", password),
