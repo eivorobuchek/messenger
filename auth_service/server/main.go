@@ -106,17 +106,17 @@ func (s *Server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 
 	email := req.GetEmail()
 	password := req.GetPassword()
-	if _, ok := s.registerUsers[email]; !ok {
-
+	userPassword, ok := s.registerUsers[email]
+	if !ok {
 		errInfo := errdetails.BadRequest_FieldViolation{
 			Field:       "email",
 			Description: fmt.Sprintf("%s not found", email),
 		}
-
+		
 		return nil, status.Error(codes.Unauthenticated, errInfo.String())
 	}
 
-	if *s.registerUsers[email] != password {
+	if *userPassword != password {
 		errInfo := errdetails.BadRequest_FieldViolation{
 			Field:       "password",
 			Description: fmt.Sprintf("%s incorrect password", password),
