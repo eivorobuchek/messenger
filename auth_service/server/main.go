@@ -59,11 +59,7 @@ func (s *Server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 	password := req.GetPassword()
 	if _, ok := s.registerUsers[Email(email)]; ok {
 
-		errInfo := errdetails.BadRequest_FieldViolation{
-			Field:       "email",
-			Description: fmt.Sprintf("%s already exists", email),
-		}
-
+		errInfo := rpcDetailedInfo("email", "already exist")
 		return nil, status.Error(codes.AlreadyExists, errInfo.String())
 	}
 
@@ -75,6 +71,13 @@ func (s *Server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 	s.mx.Unlock()
 
 	return &pb.RegisterResponse{Message: "User registered successfully"}, nil
+}
+
+func rpcDetailedInfo(field, description string) errdetails.BadRequest_FieldViolation {
+	return errdetails.BadRequest_FieldViolation{
+		Field:       field,
+		Description: fmt.Sprintf("%s: %s", field, description),
+	}
 }
 
 func validateRegisterUserRequest(req *pb.RegisterRequest) error {
@@ -120,19 +123,13 @@ func (s *Server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 	password := req.GetPassword()
 	user, ok := s.registerUsers[Email(email)]
 	if !ok {
-		errInfo := errdetails.BadRequest_FieldViolation{
-			Field:       "email",
-			Description: fmt.Sprintf("%s not found", email),
-		}
+		errInfo := rpcDetailedInfo("email", "not found")
 
 		return nil, status.Error(codes.Unauthenticated, errInfo.String())
 	}
 
 	if (*user).Password != password {
-		errInfo := errdetails.BadRequest_FieldViolation{
-			Field:       "password",
-			Description: fmt.Sprintf("%s incorrect password", password),
-		}
+		errInfo := rpcDetailedInfo("password", "incorrect")
 
 		return nil, status.Error(codes.Unauthenticated, errInfo.String())
 	}
