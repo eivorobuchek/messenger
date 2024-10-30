@@ -24,7 +24,7 @@ func main() {
 	log.Println("User Profile Service is running on port 8082")
 }
 
-const BasePath = "/api"
+const BasePath = "/app"
 
 func (api *Api) registerRoutes() {
 	router := gin.Default()
