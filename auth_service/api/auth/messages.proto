@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package github.com.eivorobuchek.messenger.auth_service;
 
+import "buf/validate/validate.proto";
+
 option go_package = "auth_service/pkg/api/auth;auth";
 
 message RegisterRequest {
@@ -14,7 +16,7 @@ message RegisterResponse {
 }
 
 message LoginRequest {
-  string email = 1;
+  string email = 1[(buf.validate.field)];
   string password = 2;
 }
 
