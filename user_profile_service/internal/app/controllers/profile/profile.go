@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"user_profile_service/internal/app/models"
 	profileModels "user_profile_service/internal/app/usecases/profile"
 )
 
@@ -20,9 +21,7 @@ func (c *ControllerProfile) UpdateProfile(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	c.UsecaseProfile
-
-	err := h.ProfileUsecase.(context.Background(), profile)
+	err = c.UsecaseProfile.EditUserProfile(context.Background(), &profile)
 	if err != nil {
 		http.Error(w, "Failed to update profile", http.StatusInternalServerError)
 		return
@@ -31,3 +30,18 @@ func (c *ControllerProfile) UpdateProfile(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusOK)
 }
 
+func (c *ControllerProfile) SearchUserByNickname(w http.ResponseWriter, r *http.Request) {
+	nickname := r.URL.Query().Get("nickname")
+	if nickname == "" {
+		http.Error(w, "Nickname is required", http.StatusBadRequest)
+		return
+	}
+
+	users, err := c.UsecaseProfile.FindUsersByNickname(context.Background(), models.Nickname(nickname))
+	if err != nil {
+		http.Error(w, "Failed to search users", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(users)
+}

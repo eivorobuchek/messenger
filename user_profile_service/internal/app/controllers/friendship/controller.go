@@ -5,7 +5,7 @@ import (
 )
 
 type Deps struct {
-	FriendshipUsecase *friendsfip.FriendshipUsecase
+	FriendshipUsecase friendsfip.FriendshipUsecase
 }
 
 type Controller struct {

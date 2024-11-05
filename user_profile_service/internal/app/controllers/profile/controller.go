@@ -5,7 +5,7 @@ import (
 )
 
 type DepsProfile struct {
-	UsecaseProfile *usecase.UsecaseProfile
+	UsecaseProfile usecase.UsecaseProfile
 }
 
 type ControllerProfile struct {
