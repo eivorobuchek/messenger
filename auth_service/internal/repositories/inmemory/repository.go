@@ -15,10 +15,6 @@ type Repository struct {
 	mx      sync.Mutex
 }
 
-var (
-// _ usecase_orders.OrdersRepository = (*Repository)(nil)
-)
-
 func NewRepository(cap int) *Repository {
 	return &Repository{
 		storage: storage{
