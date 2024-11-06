@@ -26,5 +26,7 @@ type authUsecase struct {
 
 // NewAuthUsecase бизнес сервис
 func NewAuthUsecase(d AuthDeps) *authUsecase {
-	return &authUsecase{AuthDeps: d}
+	return &authUsecase{
+		AuthDeps: d,
+	}
 }

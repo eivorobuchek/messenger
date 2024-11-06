@@ -11,6 +11,7 @@ var (
 	ErrInvalidValue    = errors.New("invalid value")
 	RegisterUserFailed = errors.New("register user failed")
 	UnregisterUser     = errors.New("unregister user")
+	ErrInvalidPassword = errors.New("invalid password")
 )
 
 func (uc *authUsecase) RegisterUser(ctx context.Context, userInfo *RegisterUser) (*models.User, error) {
@@ -52,6 +53,10 @@ func (uc *authUsecase) Login(ctx context.Context, loginUser *LoginUser) (*models
 	accountUser, err := uc.AuthRepository.GetRegisterUserByEmail(ctx, models.Email(loginUser.Email))
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", UnregisterUser, err.Error())
+	}
+
+	if !models.CheckPasswordHash(loginUser.Password, accountUser.HashedPassword) {
+		return nil, ErrInvalidPassword
 	}
 
 	authUser := models.NewAuthUser()
