@@ -46,7 +46,7 @@ func Test_profileUsecase_EditUserProfile(t *testing.T) {
 
 				// mock FindUsersByNickname
 				profileRepoMock.EXPECT().
-					FindUsersByNickname(ctx, "user123").
+					FindUsersByNickname(ctx, models.Nickname("user123")).
 					Return([]models.Profile{
 						{
 							Nickname: "user123",
@@ -67,28 +67,11 @@ func Test_profileUsecase_EditUserProfile(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "Test 2. Negative. Invalid profile data",
-			args: args{
-				ctx: ctx,
-				profile: &EditProfile{
-					Nickname: "user123",
-				}, // missing other fields for validation
-			},
-			mock: func(t *testing.T) DepsProfile {
-				profileRepoMock := mocks.NewRepositoryProfile(t)
-
-				return DepsProfile{
-					ProfileRepository: profileRepoMock,
-				}
-			},
-			wantErr: assert.Error,
-		},
-		{
 			name: "Test 3. Negative. User not found",
 			args: args{
 				ctx: ctx,
 				profile: &EditProfile{
-					Nickname: "user123",
+					Nickname: "wrongUser",
 				},
 			},
 			mock: func(t *testing.T) DepsProfile {
@@ -96,8 +79,8 @@ func Test_profileUsecase_EditUserProfile(t *testing.T) {
 
 				// mock FindUsersByNickname returning empty list
 				profileRepoMock.EXPECT().
-					FindUsersByNickname(ctx, "user123").
-					Return([]models.Profile{}, nil).Once()
+					FindUsersByNickname(ctx, models.Nickname("wrongUser")).
+					Return([]models.Profile{}, errors.New("not found")).Once()
 
 				return DepsProfile{
 					ProfileRepository: profileRepoMock,
@@ -136,7 +119,7 @@ func Test_profileUsecase_EditUserProfile(t *testing.T) {
 
 				// mock FindUsersByNickname to return valid profile
 				profileRepoMock.EXPECT().
-					FindUsersByNickname(ctx, "user123").
+					FindUsersByNickname(ctx, models.Nickname("user123")).
 					Return([]models.Profile{
 						{
 							Nickname: "user123",
@@ -178,91 +161,58 @@ func Test_profileUsecase_EditUserProfile(t *testing.T) {
 	}
 }
 
-func TestEditUserProfile(t *testing.T) {
+func Test_profileUsecase_FindUsersByNickname(t *testing.T) {
 	t.Parallel()
 
-	var ctx = context.Background()
+	// ARRANGE
+	var (
+		ctx = context.Background() // dummy
+	)
+
+	type args struct {
+		ctx      context.Context
+		nickname models.Nickname
+	}
 
 	tests := []struct {
-		name        string
-		profile     *EditProfile
-		mock        func(t *testing.T) DepsProfile
-		wantErr     assert.ErrorAssertionFunc
-		wantProfile *models.Profile
+		name    string
+		args    args
+		want    []models.Profile
+		wantErr assert.ErrorAssertionFunc
+		mock    func(t *testing.T) DepsProfile
 	}{
 		{
-			name: "Test 1. Positive case. Profile is updated",
-			profile: &EditProfile{
-				Nickname:        "existinguser",
-				ChangedNickname: "newnickname",
-				Bio:             "Updated bio",
-				Avatar:          "newavatar.png",
+			name: "Test 1. Positive. Find users successfully",
+			args: args{
+				ctx:      ctx,
+				nickname: models.Nickname("user123"),
+			},
+			want: []models.Profile{
+				{
+					Nickname: "user123",
+					Bio:      "bio",
+					Avatar:   "avatar-url",
+				},
 			},
 			mock: func(t *testing.T) DepsProfile {
-				repoMock := mocks.NewRepositoryProfile(t)
-				repoMock.On("FindUsersByNickname", ctx, "existinguser").Return([]models.Profile{
-					{Nickname: "existinguser"},
-				}, nil).Once()
+				profileRepoMock := mocks.NewRepositoryProfile(t)
 
-				repoMock.On("EditUserProfile", ctx, mock.AnythingOfType("*models.Profile")).Return(nil).Once()
+				// mock FindUsersByNickname
+				profileRepoMock.EXPECT().
+					FindUsersByNickname(ctx, models.Nickname("user123")).
+					Return([]models.Profile{
+						{
+							Nickname: "user123",
+							Bio:      "bio",
+							Avatar:   "avatar-url",
+						},
+					}, nil).Once()
 
-				return DepsProfile{ProfileRepository: repoMock}
+				return DepsProfile{
+					ProfileRepository: profileRepoMock,
+				}
 			},
 			wantErr: assert.NoError,
-			wantProfile: &models.Profile{
-				Nickname: "newnickname",
-				Bio:      "Updated bio",
-				Avatar:   "newavatar.png",
-			},
-		},
-		{
-			name:    "Test 2. Error case. Profile is nil",
-			profile: nil,
-			mock: func(t *testing.T) DepsProfile {
-				return DepsProfile{}
-			},
-			wantErr: assert.Error,
-		},
-		{
-			name: "Test 3. Error case. Profile validation fails",
-			profile: &EditProfile{
-				Nickname: "", // invalid profile
-			},
-			mock: func(t *testing.T) DepsProfile {
-				return DepsProfile{}
-			},
-			wantErr: assert.Error,
-		},
-		{
-			name: "Test 4. Error case. User not found",
-			profile: &EditProfile{
-				Nickname: "nonexistentuser",
-			},
-			mock: func(t *testing.T) DepsProfile {
-				repoMock := mocks.NewRepositoryProfile(t)
-				repoMock.On("FindUsersByNickname", ctx, "nonexistentuser").Return([]models.Profile{}, nil).Once()
-				return DepsProfile{
-					ProfileRepository: repoMock,
-				}
-			},
-			wantErr: assert.Error,
-		},
-		{
-			name: "Test 5. Error case. Repository returns error",
-			profile: &EditProfile{
-				Nickname: "existinguser",
-			},
-			mock: func(t *testing.T) DepsProfile {
-				repoMock := mocks.NewRepositoryProfile(t)
-				repoMock.On("FindUsersByNickname", ctx, "existinguser").Return([]models.Profile{
-					{Nickname: "existinguser"},
-				}, nil).Once()
-				repoMock.On("EditUserProfile", ctx, mock.AnythingOfType("*models.Profile")).Return(errors.New("db error")).Once()
-				return DepsProfile{
-					ProfileRepository: repoMock,
-				}
-			},
-			wantErr: assert.Error,
 		},
 	}
 
@@ -270,30 +220,19 @@ func TestEditUserProfile(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			repoMock := tt.mock(t)
-			usecase := &profileUsecase{
-				DepsProfile: repoMock,
+			// ARRANGE
+			useCase := &profileUsecase{
+				DepsProfile{
+					ProfileRepository: tt.mock(t).ProfileRepository,
+				},
 			}
 
 			// ACT
-			err := usecase.EditUserProfile(ctx, tt.profile)
+			got, err := useCase.FindUsersByNickname(tt.args.ctx, tt.args.nickname)
 
 			// ASSERT
+			assert.Equal(t, tt.want, got)
 			tt.wantErr(t, err)
-
-			// Additional assertions if the profile was successfully edited
-			if err == nil {
-				// Profile should be edited with the updated fields
-				assert.NotNil(t, tt.wantProfile)
-				assert.Equal(t, tt.wantProfile.Nickname, tt.profile.ChangedNickname)
-				assert.Equal(t, tt.wantProfile.Bio, tt.profile.Bio)
-				assert.Equal(t, tt.wantProfile.Avatar, tt.profile.Avatar)
-			}
-
-			//assert.Equal(t, tt.want, got)  // mark test as failed but continue execution
-			//require.Equal(t, tt.want, got) // mark test as failed and exit
-
-			//repoMock.ProfileRepository.AssertExpectations(t)
 		})
 	}
 }
