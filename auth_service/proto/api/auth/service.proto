@@ -4,9 +4,9 @@ package github.com.eivorobuchek.messenger.auth_service;
 
 import "messages.proto";
 
-option go_package = "auth_service/pkg/api/auth;auth";
+option go_package = "auth_service/pkg/app/auth;auth";
 
 service AuthService {
-  rpc Register (RegisterRequest) returns (RegisterResponse);
+  rpc Register (RegisterRequest) returns (RegisterResponse) ;
   rpc Login (LoginRequest) returns (LoginResponse);
 }
