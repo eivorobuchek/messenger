@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-type UserId string
+type UserID string
 
 func (id UserId) String() string {
 	return string(id)
