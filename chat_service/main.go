@@ -24,7 +24,7 @@ func main() {
 	log.Println("Chat Service is running on port 8083")
 }
 
-const BasePath = "/api"
+const BasePath = "/app"
 
 func (api *Api) registerRoutes() {
 	router := gin.Default()
